@@ -1,18 +1,9 @@
 package com.app.rtspapp.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,11 +17,15 @@ import com.app.rtspapp.viewmodel.StreamScreenViewModel
 fun StreamScreen(
     viewModel: StreamScreenViewModel = hiltViewModel(),
     isInPipMode: Boolean = false,
+    isFullScreen: Boolean = false,
     onEnterPipMode: () -> Unit = {},
+    onToggleFullScreen: () -> Unit = {}
 ) {
     Scaffold { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
-            StreamTopBar()
+            if (!isInPipMode && !isFullScreen) {
+                StreamTopBar()
+            }
             StreamContent(
                 url = viewModel.url.value,
                 onUrlChange = { viewModel.onUrlChange(it) },
@@ -39,7 +34,10 @@ fun StreamScreen(
                     if (viewModel.isRecording.value) viewModel.stopRecording()
                     else viewModel.startRecording()
                 },
-                onEnterPIP = onEnterPipMode
+                onEnterPIP = onEnterPipMode,
+                isInPipMode = isInPipMode,
+                isFullScreen = isFullScreen,
+                onToggleFullScreen = onToggleFullScreen
             )
         }
     }
@@ -66,32 +64,49 @@ fun StreamContent(
     isRecording: Boolean,
     onToggleRecording: () -> Unit,
     onEnterPIP: () -> Unit,
+    isInPipMode: Boolean = false,
+    isFullScreen: Boolean = false,
+    onToggleFullScreen: () -> Unit
 ) {
-    Column(modifier = modifier) {
-        UrlInputField(
-            url = url,
-            onUrlChange = onUrlChange,
+    if (isInPipMode) {
+        RSTPPlayerView(
+            onToggleFullScreen = onToggleFullScreen
         )
-        Spacer(modifier = Modifier.height(16.dp))
+    } else {
+        LazyColumn(modifier = modifier) {
+            item {
+                UrlInputField(
+                    url = url,
+                    onUrlChange = onUrlChange,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-        RSTPPlayerView()
+            item {
+                RSTPPlayerView(
+                    onToggleFullScreen = onToggleFullScreen
+                )
+            }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
 
-        RecordingButton(
-            isRecording = isRecording,
-            onClick = onToggleRecording
-        )
+                RecordingButton(
+                    isRecording = isRecording,
+                    onClick = onToggleRecording
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = onEnterPIP,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-        ) {
-            Text(text = stringResource(R.string.enter_pip_mode))
+                Button(
+                    onClick = onEnterPIP,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(text = stringResource(R.string.enter_pip_mode))
+                }
+            }
         }
     }
 }
