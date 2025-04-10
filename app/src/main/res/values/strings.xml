@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">RTSP App</string>
+    <string name="enter_url">Enter Url…</string>
+    <string name="stop_recording">Stop</string>
+    <string name="start_recording">Start</string>
+    <string name="enter_pip">Enter PIP\n</string>
+    <string name="enter_pip_mode">Enter Picture-in-Picture</string>
+</resources>
