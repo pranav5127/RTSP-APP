@@ -19,9 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class StreamScreenViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    internal val exoPlayer: ExoPlayer
 ) : ViewModel() {
 
-    val exoPlayer = ExoPlayer.Builder(context).build()
     var url = mutableStateOf("")
         private set
 
@@ -30,7 +30,6 @@ class StreamScreenViewModel @Inject constructor(
 
     private var ffmpegSession: FFmpegSession? = null
 
-    // Updates the media stream when URL is changed
     fun onUrlChange(newUrl: String) {
         url.value = newUrl
 
@@ -51,7 +50,6 @@ class StreamScreenViewModel @Inject constructor(
         }
     }
 
-    // Starts recording using an asynchronous FFmpeg command
     fun startRecording() {
         if (isRecording.value) {
             Log.d("StreamScreenViewModel", "Recording already in progress")
@@ -66,29 +64,25 @@ class StreamScreenViewModel @Inject constructor(
 
         val outputPath = getOutputFilePath()
         val command = "-i \"$streamUrl\" -c copy \"$outputPath\""
-
         Log.d("StreamScreenViewModel", "Starting recording with command: $command")
 
-        // Mark the recording as in progress
         isRecording.value = true
 
-        // Execute FFmpeg command asynchronously
-        ffmpegSession = FFmpegKit.executeAsync(command) { session ->
-            if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
-                Log.d("StreamScreenViewModel", "Recording completed successfully")
-            } else if (com.arthenica.ffmpegkit.ReturnCode.isCancel(session.returnCode)) {
-                Log.d("StreamScreenViewModel", "Recording was cancelled")
-            } else {
-                Log.d("StreamScreenViewModel", "Recording failed with error code: ${session.returnCode}")
+        viewModelScope.launch {
+            ffmpegSession = FFmpegKit.executeAsync(command) { session ->
+                if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
+                    Log.d("StreamScreenViewModel", "Recording completed successfully")
+                } else if (com.arthenica.ffmpegkit.ReturnCode.isCancel(session.returnCode)) {
+                    Log.d("StreamScreenViewModel", "Recording was cancelled")
+                } else {
+                    Log.d("StreamScreenViewModel", "Recording failed with error code: ${session.returnCode}")
+                }
+                isRecording.value = false
+                ffmpegSession = null
             }
-
-            // Reset the state once the session finishes
-            isRecording.value = false
-            ffmpegSession = null
         }
     }
 
-    // Stops the recording by cancelling the FFmpeg session
     fun stopRecording() {
         if (!isRecording.value) {
             Log.d("StreamScreenViewModel", "No recording in progress to stop")
@@ -100,13 +94,11 @@ class StreamScreenViewModel @Inject constructor(
             FFmpegKit.cancel(session.sessionId)
         }
 
-        // Reset recording state
         isRecording.value = false
         ffmpegSession = null
         Log.d("StreamScreenViewModel", "Recording stopped successfully")
     }
 
-    // Returns the output file path for the recording
     private fun getOutputFilePath(): String {
         val dir = File(context.getExternalFilesDir(null), "recordings")
         if (!dir.exists()) {
