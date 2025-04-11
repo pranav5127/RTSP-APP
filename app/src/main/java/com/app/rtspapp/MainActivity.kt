@@ -22,7 +22,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private var isInPipModeState = mutableStateOf(false)
-    private var isFullScreenState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +31,6 @@ class MainActivity : ComponentActivity() {
             RTSPAppTheme(dynamicColor = false) {
                 StreamScreen(
                     isInPipMode = isInPipModeState.value,
-                    isFullScreen = isFullScreenState.value,
                     onEnterPipMode = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             val aspectRatio = Rational(16, 9)

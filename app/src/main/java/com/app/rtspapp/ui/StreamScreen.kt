@@ -1,10 +1,12 @@
 package com.app.rtspapp.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -27,7 +29,6 @@ import com.app.rtspapp.viewmodel.StreamScreenViewModel
 fun StreamScreen(
     viewModel: StreamScreenViewModel = hiltViewModel(),
     isInPipMode: Boolean = false,
-    isFullScreen: Boolean = false,
     onEnterPipMode: () -> Unit = {},
 
 ) {
@@ -96,23 +97,37 @@ fun StreamContent(
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                RecordingButton(
-                    isRecording = isRecording,
-                    onClick = onToggleRecording
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = onEnterPIP,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                 ) {
-                    Text(text = stringResource(R.string.enter_pip_mode))
+                    Button(
+                        onClick = onToggleRecording,
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        Text(
+                            text = if (isRecording)
+                                stringResource(R.string.stop_recording)
+                            else
+                                stringResource(R.string.start_recording)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = onEnterPIP,
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        Text(text = stringResource(R.string.enter_pip_mode))
+                    }
                 }
+
+
+
             }
         }
     }
@@ -142,24 +157,3 @@ fun UrlInputField(
     )
 }
 
-@Composable
-fun RecordingButton(
-    isRecording: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-    ) {
-        Text(
-            text = if (isRecording) {
-                stringResource(R.string.stop_recording)
-            } else {
-                stringResource(R.string.start_recording)
-            }
-        )
-    }
-}

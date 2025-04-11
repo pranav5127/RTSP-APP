@@ -34,7 +34,7 @@ fun RSTPPlayerView(
     val activity = context as Activity
     Box(
         modifier = modifier
-            .height(if (viewModel.isFullScreen.value) 600.dp else 300.dp)
+            .height(if (viewModel.isFullScreen.value) 400.dp else 300.dp)
             .padding(8.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
