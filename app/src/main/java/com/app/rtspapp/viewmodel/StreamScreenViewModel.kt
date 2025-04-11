@@ -28,6 +28,12 @@ class StreamScreenViewModel @Inject constructor(
     var isRecording = mutableStateOf(false)
         private set
 
+    var isFullScreen = mutableStateOf(false)
+        private set
+    fun onToggleFullScreen(isFullScreen: Boolean) {
+        this.isFullScreen.value = isFullScreen
+    }
+
     private var ffmpegSession: FFmpegSession? = null
 
     fun onUrlChange(newUrl: String) {

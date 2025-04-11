@@ -42,53 +42,12 @@ class MainActivity : ComponentActivity() {
                             enterPictureInPictureMode(pipBuilder)
                         }
                     },
-                    onToggleFullScreen = {
-                        toggleFullScreen()
-                    }
+
                 )
             }
         }
     }
 
-    private var isFullScreen = false
-
-    @SuppressLint("WrongConstant")
-    private fun toggleFullScreen() {
-        isFullScreen = !isFullScreen
-        isFullScreenState.value = isFullScreen
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val controller = WindowCompat.getInsetsController(window, window.decorView)
-            if (isFullScreen) {
-                controller.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                controller.hide(
-                    android.view.WindowInsets.Type.statusBars() or
-                            android.view.WindowInsets.Type.navigationBars()
-                )
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            } else {
-                controller.show(
-                    android.view.WindowInsets.Type.statusBars() or
-                            android.view.WindowInsets.Type.navigationBars()
-                )
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            if (isFullScreen) {
-                window.decorView.systemUiVisibility =
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            } else {
-                @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
-        }
-    }
 
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,

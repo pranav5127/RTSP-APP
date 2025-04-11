@@ -29,11 +29,11 @@ fun StreamScreen(
     isInPipMode: Boolean = false,
     isFullScreen: Boolean = false,
     onEnterPipMode: () -> Unit = {},
-    onToggleFullScreen: () -> Unit = {}
+
 ) {
     Scaffold { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
-            if (!isInPipMode && !isFullScreen) {
+            if (!isInPipMode && !viewModel.isFullScreen.value) {
                 StreamTopBar()
             }
             StreamContent(
@@ -46,7 +46,6 @@ fun StreamScreen(
                 },
                 onEnterPIP = onEnterPipMode,
                 isInPipMode = isInPipMode,
-                onToggleFullScreen = onToggleFullScreen
             )
         }
     }
@@ -74,11 +73,11 @@ fun StreamContent(
     onToggleRecording: () -> Unit,
     onEnterPIP: () -> Unit,
     isInPipMode: Boolean = false,
-    onToggleFullScreen: () -> Unit
+
 ) {
     if (isInPipMode) {
         RSTPPlayerView(
-            onToggleFullScreen = onToggleFullScreen
+           
         )
     } else {
         LazyColumn(modifier = modifier) {
@@ -92,7 +91,7 @@ fun StreamContent(
 
             item {
                 RSTPPlayerView(
-                    onToggleFullScreen = onToggleFullScreen
+
                 )
             }
 
