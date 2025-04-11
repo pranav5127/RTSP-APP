@@ -5,24 +5,23 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import javax.inject.Inject
 import androidx.core.net.toUri
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class StreamScreenViewModel @Inject constructor(
-    val exoPlayer: ExoPlayer,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
+    val exoPlayer = ExoPlayer.Builder(context).build()
     var url = mutableStateOf("")
         private set
 
@@ -31,122 +30,95 @@ class StreamScreenViewModel @Inject constructor(
 
     private var ffmpegSession: FFmpegSession? = null
 
-    init {
-        Log.d("StreamScreenViewModel", "Initializing ViewModel and setting up ExoPlayer listener.")
-        exoPlayer.addListener(object : Player.Listener {
-            override fun onPlayerError(error: PlaybackException) {
-                Log.e("StreamScreenViewModel", "Playback error: ${error.message}", error)
-            }
-
-            override fun onPlaybackStateChanged(state: Int) {
-                val stateStr = when (state) {
-                    Player.STATE_BUFFERING -> "BUFFERING"
-                    Player.STATE_ENDED -> "ENDED"
-                    Player.STATE_IDLE -> "IDLE"
-                    Player.STATE_READY -> "READY"
-                    else -> "UNKNOWN"
-                }
-                Log.d("StreamScreenViewModel", "Playback state changed: $stateStr")
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                Log.d("StreamScreenViewModel", "Is playing: $isPlaying")
-            }
-        })
-    }
-
-
+    // Updates the media stream when URL is changed
     fun onUrlChange(newUrl: String) {
-        Log.d("StreamScreenViewModel", "▶ onUrlChange() called with URL: $newUrl")
-
         url.value = newUrl
 
-        if (newUrl.isBlank()) {
-            Log.w("StreamScreenViewModel", "⚠ URL is blank. Skipping media item setup.")
-            return
-        }
+        if (newUrl.isBlank()) return
 
         try {
-            // Build MediaItem with RTSP MIME type
+            exoPlayer.clearMediaItems()
             val mediaItem = MediaItem.Builder()
                 .setUri(newUrl.toUri())
-                .setMimeType(MimeTypes.APPLICATION_RTSP)
                 .build()
 
-            Log.d("StreamScreenViewModel", "MediaItem prepared:")
-            Log.d("StreamScreenViewModel", "   • URI       : ${mediaItem.localConfiguration?.uri}")
-            Log.d(
-                "StreamScreenViewModel",
-                "   • MimeType  : ${mediaItem.localConfiguration?.mimeType}"
-            )
-
-            // Set and prepare ExoPlayer
             exoPlayer.setMediaItem(mediaItem)
-            Log.d("StreamScreenViewModel", "MediaItem set on ExoPlayer.")
-
             exoPlayer.prepare()
-            Log.d("StreamScreenViewModel", "ExoPlayer prepared.")
-
             exoPlayer.playWhenReady = true
-            Log.d("StreamScreenViewModel", "ExoPlayer set to play when ready = true.")
 
         } catch (e: Exception) {
-            Log.e("StreamScreenViewModel", "Exception occurred while setting RTSP stream:", e)
+            Log.d("StreamScreenViewModel", "Error setting media item: ${e.message}")
         }
     }
 
-
+    // Starts recording using an asynchronous FFmpeg command
     fun startRecording() {
-        if (url.value.isBlank()) {
-            Log.d("StreamScreenViewModel", "startRecording: URL is blank; recording not started.")
+        if (isRecording.value) {
+            Log.d("StreamScreenViewModel", "Recording already in progress")
             return
         }
 
-        Log.d("StreamScreenViewModel", "startRecording: Starting recording for URL: ${url.value}")
+        val streamUrl = url.value
+        if (streamUrl.isBlank()) {
+            Log.d("StreamScreenViewModel", "Stream URL is blank, cannot record")
+            return
+        }
+
         val outputPath = getOutputFilePath()
-        Log.d("StreamScreenViewModel", "startRecording: Output path is $outputPath")
-        val command = "-i ${url.value} -c copy $outputPath"
+        val command = "-i \"$streamUrl\" -c copy \"$outputPath\""
+
+        Log.d("StreamScreenViewModel", "Starting recording with command: $command")
+
+        // Mark the recording as in progress
         isRecording.value = true
-        Log.d("StreamScreenViewModel", "startRecording: Command for FFmpeg: $command")
 
-        ffmpegSession = FFmpegKit.executeAsync(command) {
-            Log.d("StreamScreenViewModel", "FFmpegKit execution completed. Recording stopped.")
+        // Execute FFmpeg command asynchronously
+        ffmpegSession = FFmpegKit.executeAsync(command) { session ->
+            if (com.arthenica.ffmpegkit.ReturnCode.isSuccess(session.returnCode)) {
+                Log.d("StreamScreenViewModel", "Recording completed successfully")
+            } else if (com.arthenica.ffmpegkit.ReturnCode.isCancel(session.returnCode)) {
+                Log.d("StreamScreenViewModel", "Recording was cancelled")
+            } else {
+                Log.d("StreamScreenViewModel", "Recording failed with error code: ${session.returnCode}")
+            }
+
+            // Reset the state once the session finishes
             isRecording.value = false
+            ffmpegSession = null
         }
     }
 
+    // Stops the recording by cancelling the FFmpeg session
     fun stopRecording() {
-        Log.d("StreamScreenViewModel", "stopRecording: Stopping recording, if active.")
-        ffmpegSession?.let {
-            Log.d(
-                "StreamScreenViewModel",
-                "stopRecording: Cancelling FFmpegKit session with id: ${it.sessionId}"
-            )
-            FFmpegKit.cancel(it.sessionId)
+        if (!isRecording.value) {
+            Log.d("StreamScreenViewModel", "No recording in progress to stop")
+            return
         }
+
+        ffmpegSession?.let { session ->
+            Log.d("StreamScreenViewModel", "Stopping recording, cancelling session with id: ${session.sessionId}")
+            FFmpegKit.cancel(session.sessionId)
+        }
+
+        // Reset recording state
         isRecording.value = false
+        ffmpegSession = null
+        Log.d("StreamScreenViewModel", "Recording stopped successfully")
     }
 
+    // Returns the output file path for the recording
     private fun getOutputFilePath(): String {
         val dir = File(context.getExternalFilesDir(null), "recordings")
         if (!dir.exists()) {
             dir.mkdirs()
-            Log.d(
-                "StreamScreenViewModel",
-                "getOutputFilePath: Created recordings directory at ${dir.absolutePath}"
-            )
         }
         val file = File(dir, "recorded_${System.currentTimeMillis()}.mp4")
-        Log.d(
-            "StreamScreenViewModel",
-            "getOutputFilePath: Generated file path: ${file.absolutePath}"
-        )
         return file.absolutePath
     }
 
     override fun onCleared() {
         super.onCleared()
-        Log.d("StreamScreenViewModel", "onCleared: Releasing ExoPlayer.")
+        stopRecording()
         exoPlayer.release()
     }
 }

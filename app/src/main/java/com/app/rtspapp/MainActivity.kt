@@ -3,21 +3,20 @@ package com.app.rtspapp
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.app.rtspapp.ui.StreamScreen
 import com.app.rtspapp.ui.theme.RTSPAppTheme
 import dagger.hilt.android.AndroidEntryPoint
-import android.content.res.Configuration
-import android.util.Rational
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -61,15 +60,15 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val controller = WindowCompat.getInsetsController(window, window.decorView)
             if (isFullScreen) {
-                controller?.systemBarsBehavior =
+                controller.systemBarsBehavior =
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                controller?.hide(
+                controller.hide(
                     android.view.WindowInsets.Type.statusBars() or
                             android.view.WindowInsets.Type.navigationBars()
                 )
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             } else {
-                controller?.show(
+                controller.show(
                     android.view.WindowInsets.Type.statusBars() or
                             android.view.WindowInsets.Type.navigationBars()
                 )

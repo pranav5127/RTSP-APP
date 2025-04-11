@@ -31,15 +31,19 @@ fun RSTPPlayerView(
             .clip(RoundedCornerShape(16.dp))
     ) {
         AndroidView(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             factory = { context ->
+
                 PlayerView(context).apply {
-                    player = viewModel.exoPlayer
                     useController = true
                 }
+            },
+            update = { playerView ->
+
+                playerView.player = viewModel.exoPlayer
             }
         )
+
 
         IconButton(
             onClick = onToggleFullScreen,

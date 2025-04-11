@@ -13,15 +13,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ExoPlayerModule {
-   @Provides
-   @Singleton
-   fun provideExoPlayer(@ApplicationContext context: Context): ExoPlayer {
-       return ExoPlayer.Builder(context).build()
-   }
-
     @Provides
     @Singleton
-    fun provideContext(@ApplicationContext context: Context): Context {
-        return context
+    fun provideExoPlayer(@ApplicationContext context: Context): ExoPlayer {
+        return ExoPlayer.Builder(context).build()
     }
 }

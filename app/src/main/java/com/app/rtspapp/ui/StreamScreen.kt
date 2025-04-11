@@ -1,9 +1,19 @@
 package com.app.rtspapp.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +46,6 @@ fun StreamScreen(
                 },
                 onEnterPIP = onEnterPipMode,
                 isInPipMode = isInPipMode,
-                isFullScreen = isFullScreen,
                 onToggleFullScreen = onToggleFullScreen
             )
         }
@@ -65,7 +74,6 @@ fun StreamContent(
     onToggleRecording: () -> Unit,
     onEnterPIP: () -> Unit,
     isInPipMode: Boolean = false,
-    isFullScreen: Boolean = false,
     onToggleFullScreen: () -> Unit
 ) {
     if (isInPipMode) {
