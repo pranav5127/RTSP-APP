@@ -1,3 +1,7 @@
+<img src="media/ss1.jpg" alt="img1" style="height:300px; display:inline-block; margin-right:10px;">
+<img src="media/ss2.jpg" alt="img2" style="height:300px; display:inline-block;">
+
+
 # RTSP App Documentation
 
 ## Overview
